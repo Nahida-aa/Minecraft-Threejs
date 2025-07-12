@@ -26,3 +26,14 @@ body {
   font-size: 32px;
 }
 
+.center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.absolute {
+  position: absolute;
+}
+.white {
+  color: rgb(250, 247, 247);
+}
