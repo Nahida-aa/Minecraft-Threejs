@@ -3,9 +3,11 @@ import { Block, type BlockKey } from './level/block/Block';
 import { WORLD_DEPTH, WORLD_HEIGHT, WORLD_SIZE, WORLD_TOTAL_HEIGHT } from '../constants';
 import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
 import { RNG } from '../utils/rng';
+import type { instance } from 'three/tsl';
 
 export interface BlockState {
   key: BlockKey; // 方块的名称
+  instanceId?: number; // 如果没有分配实例ID, 则为 说明这个方块存在于这个世界, 但由于被遮挡, 因此不需要渲染
 }
 export type BlockStates = BlockState[][][]
 
@@ -126,15 +128,17 @@ export class World {
       }
     }
   }
+  // 生成地形(放置方块)
   private generateTerrain() {
-    // 生成地形(放置方块)
     const matrix = new THREE.Matrix4(); // Create a new matrix for positioning
     for (let x = 0; x < WORLD_SIZE; x++) {
       for (let y = 0; y < (WORLD_HEIGHT+WORLD_DEPTH); y++) {
         for (let z = 0; z < WORLD_SIZE; z++) {
           const blockState = this.getBlockStateAt(x, y, z); // Get the block state at the current position
           const block = this.blocks.find(b => b.getName() === blockState.key); // Find the corresponding block
-          if (block && blockState.key !== "air") { // If the block is not air
+          // 实现不放置 看不见的方块(空气,被挡住的)
+          //
+          if (block && blockState.key !== "air" && this.shouldRender(x, y, z)) {
             const instanceMesh = block.getInstanceMesh(); // Get the instanced mesh of the block
             matrix.setPosition(x, y, z); // Set the position in the matrix
             instanceMesh.setMatrixAt(instanceMesh.count, matrix); // Set the matrix for each instance
@@ -143,6 +147,25 @@ export class World {
         }
       }
     }
+  }
+  // 如果没有被遮挡, 就应该显示
+  public shouldRender(x: number, y: number, z: number): boolean {
+    const up = this.getBlockStateAt(x, y + 1, z).key === "air"; // Get the block state above
+    const down = this.getBlockStateAt(x, y - 1, z).key === "air"; // Get the block state below
+    const left = this.getBlockStateAt(x - 1, y, z).key === "air"; // Get the block state to the left
+    const right = this.getBlockStateAt(x + 1, y, z).key === "air"; // Get the block state to the right
+    const front = this.getBlockStateAt(x, y, z - 1).key === "air"; // Get the block state in front
+    const back = this.getBlockStateAt(x, y, z + 1).key === "air"; // Get the block state behind
+    // If any of the adjacent blocks are air, the block should be rendered
+    return up || down || left || right || front || back; // Return true if any
+  }
+  public getAllBlockMesh() {
+    return this.blocks.map(block => block.getInstanceMesh()); // Return all block meshes
+  }
+  public removeBlockState() {}
+
+  public placeBlockState(){
+
   }
 
   // test
@@ -155,8 +178,7 @@ export class World {
       for (let i = 0; i < length; i++) {
         for (let j = 0; j < length; j++) {
           // 设置每个实例的变换矩阵
-          const position = new THREE.Vector3(i, y, j); // Set the position of each block
-          matrix.setPosition(position); // Set the position in the matrix
+          matrix.setPosition(i, y, j); // Set the position in the matrix
           instanceMesh.setMatrixAt(i * length + j, matrix); // Set the matrix for each instance
         }
       }

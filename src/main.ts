@@ -13,7 +13,7 @@ const { renderer, camera, scene, stats } = environment.getEssentials(); // Get e
 const world = new World(scene); // Initialize the world with the scene
 // world.generateBlocks(WORLD_SIZE, "bedrock", 0); // Generate bedrock blocks at the bottom layer
 
-const player = new Player(camera, renderer.domElement); // Initialize the player with the camera and renderer's DOM element
+const player = new Player(camera, world, renderer.domElement); // Initialize the player with the camera and renderer's DOM element
 // const orbitControls = new OrbitControls( camera, renderer.domElement ); // 
 
 const geometry = new THREE.BoxGeometry( 1, 1, 1 );

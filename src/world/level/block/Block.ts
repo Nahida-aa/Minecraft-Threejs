@@ -12,6 +12,7 @@ export class Block {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = getMaterials(name);
     this.instanceMesh = new THREE.InstancedMesh(geometry, material, WORLD_SIZE*WORLD_SIZE); // 实例化网格 以节约性能
+    this.instanceMesh.count = 0; // 初始化实例数量为0
     this.name = name; 
   }
 
