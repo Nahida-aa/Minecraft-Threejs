@@ -109,6 +109,8 @@ export class Player {
 
   // 默认方法 修饰是 private, 但可以被子类覆盖
   handleMouseDown(event: MouseEvent) {
+    event.preventDefault(); // 阻止默认事件, 防止浏览器行为干扰
+    event.stopPropagation(); // 阻止事件冒泡, 防止影响其他事件
     const action = getActionByMouse(event.button as MouseCodes);
     // 不用状态机
     switch (action) {
@@ -119,6 +121,7 @@ export class Player {
       case "middleClick":
       case "put":
         console.log(`Mouse down: ${event.button}, Action: ${action}`);
+        this.putBlockState()
         break;
       default:
         break;
@@ -154,13 +157,19 @@ export class Player {
     const intersects = this.raycaster.intersectObjects(meshs); // 检测与方块的交点
     // 3. 发出破坏哪个方块的信号
     if (intersects.length > 0) {
-      console.log(intersects[0].point); // 输出交点位置
-      // const intersectedObject = intersects[0].object; // 获取第一个交点的对象
-      // const blockMesh = intersectedObject as THREE.InstancedMesh; // 强制转换为 InstancedMesh
-      // const instanceIndex = intersects[0].instanceId; // 获取实例索引
-      // // 3. 根据 intersectedObject 和 instanceIndex, 找到对应的 BlockState
-      // const block = this.world.getBlockByInstanceMesh(blockMesh, instanceIndex); // 获取对应的 Block
-      // if (block) {
+      // console.log(intersects[0].point); // 输出交点位置
+      this.world.removeBlockState(intersects[0]); // 在交点位置破坏方块
+    }
+  }
+  public putBlockState() {
+    const meshs = this.world.getAllBlockMesh(); // 获取所有方块的实例化网格
+    this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera); // 设置光线投射器的起点和方向
+    const intersects = this.raycaster.intersectObjects(meshs); // 检测与方块的交点
+    if (intersects.length > 0) {
+      this.world.placeBlockState(
+        intersects[0], // 获取交点位置
+        "plank" // 这里可以根据需要替换成其他方块类型
+      ); // 在交点位置放置方块
     }
   }
 
